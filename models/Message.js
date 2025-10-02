@@ -12,6 +12,18 @@ class Message {
     return db.collection('messages');
   }
 
+  // Create indexes for better query performance
+  static async createIndexes(db) {
+    try {
+      await this.collection(db).createIndex({ username: 1 });
+      await this.collection(db).createIndex({ timestamp: 1 });
+      await this.collection(db).createIndex({ id: 1 });
+      console.log('Message indexes created successfully');
+    } catch (error) {
+      console.error('Error creating message indexes:', error);
+    }
+  }
+
   static async create(db, messageData) {
     const message = new Message(messageData.username, messageData.message);
     const result = await this.collection(db).insertOne({

@@ -14,6 +14,19 @@ class User {
     return db.collection('users');
   }
 
+  // Create indexes for better query performance
+  static async createIndexes(db) {
+    try {
+      await this.collection(db).createIndex({ username: 1 }, { unique: true });
+      await this.collection(db).createIndex({ email: 1 }, { unique: true });
+      await this.collection(db).createIndex({ socketId: 1 });
+      await this.collection(db).createIndex({ online: 1 });
+      console.log('User indexes created successfully');
+    } catch (error) {
+      console.error('Error creating user indexes:', error);
+    }
+  }
+
   static async create(db, userData) {
     // Hash password before storing
     const saltRounds = 10;
