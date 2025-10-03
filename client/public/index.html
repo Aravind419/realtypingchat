@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Chat App</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+</head>
+<body>
+    <div id="app">
+        <div id="login" class="container">
+            <h2>Join Chat</h2>
+            <input type="text" id="username" placeholder="Enter your username">
+            <button id="join-btn">Join Chat</button>
+        </div>
+        
+        <div id="chat" class="container hidden">
+            <div class="header">
+                <h2>Real-time Chat</h2>
+                <div class="online-users">
+                    <button id="online-users-btn">Online Users (<span id="online-count">0</span>)</button>
+                    <div id="online-users-list" class="dropdown hidden"></div>
+                </div>
+            </div>
+            
+            <div id="messages-container">
+                <div id="messages"></div>
+                <div id="typing-indicator" class="hidden"></div>
+            </div>
+            
+            <form id="message-form">
+                <input type="text" id="message-input" placeholder="Type a message...">
+                <button type="submit">Send</button>
+            </form>
+            
+            <div id="offline-banner" class="hidden">
+                You are offline. Messages will be sent when you reconnect.
+            </div>
+        </div>
+    </div>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
