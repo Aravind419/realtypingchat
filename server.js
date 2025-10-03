@@ -250,10 +250,11 @@ async function broadcastOnlineUsers() {
     const db = getDB();
     const allUsers = await User.findAll(db);
     
-    // Count users who are currently connected (real-time)
+    // Count users who are currently connected (real-time) - this is the accurate count
     let onlineCount = Object.keys(connectedUsers).length;
     
     // Also count users marked as online in DB who might not be in connectedUsers yet
+    // But avoid double counting by checking if they're already in connectedUsers
     for (const user of allUsers) {
       if (user.online === true && !connectedUsers[user.username]) {
         onlineCount++;
@@ -270,7 +271,7 @@ async function broadcastOnlineUsers() {
     }));
     io.emit('users list', onlineUsersList);
   } catch (error) {
-    console.error('Error broadcasting online users:', error);
+    logger.error('Error broadcasting online users:', error);
   }
 }
 
@@ -552,7 +553,7 @@ io.on('connection', (socket) => {
   });
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001; // Changed default port to 3001 to avoid conflicts
 
 // Connect to MongoDB and start server
 connectDB().then(() => {
@@ -560,6 +561,19 @@ connectDB().then(() => {
     logger.info(`Server running on port ${PORT}`);
     logger.info('Nodemon is now working perfectly with automatic restarts!');
     logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  });
+  
+  // Handle server errors
+  serverInstance.on('error', (error) => {
+    if (error.code === 'EADDRINUSE') {
+      logger.error(`Port ${PORT} is already in use. Trying ${PORT + 1}...`);
+      setTimeout(() => {
+        serverInstance.close();
+        server.listen(PORT + 1);
+      }, 1000);
+    } else {
+      logger.error('Server error:', error);
+    }
   });
   
   // Handle graceful shutdown

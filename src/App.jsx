@@ -16,6 +16,8 @@ function App() {
   const [typingUser, setTypingUser] = useState('');
   const [typingText, setTypingText] = useState('');
   const [onlineUsers, setOnlineUsers] = useState(0);
+  const [onlineUsersList, setOnlineUsersList] = useState([]); // New state for users list
+  const [showOnlineUsers, setShowOnlineUsers] = useState(false); // New state for showing users list
   const [isTyping, setIsTyping] = useState(false);
   const [newUsername, setNewUsername] = useState('');
   const [newEmail, setNewEmail] = useState('');
@@ -26,11 +28,14 @@ function App() {
   const typingTimeoutRef = useRef(null);
   const messagesEndRef = useRef(null);
   const usernameInputRef = useRef(null);
+  const onlineUsersRef = useRef(null); // Ref for online users display element
   
   // Audio call states
   const [incomingCall, setIncomingCall] = useState(null);
   const [activeCall, setActiveCall] = useState(null);
   const [callNotification, setCallNotification] = useState(null);
+  const [audioContext, setAudioContext] = useState(null); // For audio simulation
+  const [isCallActive, setIsCallActive] = useState(false); // Track call status
   
   // Push notification state
   const [isSubscribed, setIsSubscribed] = useState(false);
@@ -166,8 +171,9 @@ function App() {
     });
 
     socket.on('users list', (users) => {
-      // You could use this to display a list of users if needed
-      console.log('Online users list:', users);
+      // Filter to show only online users
+      const onlineUsers = users.filter(user => user.online);
+      setOnlineUsersList(onlineUsers);
     });
 
     // Handle typing with real text
@@ -261,6 +267,7 @@ function App() {
         caller: data.caller,
         message: `${data.caller} is calling you`
       });
+      playCallSound(); // Play sound when receiving call
     });
     
     socket.on('call accepted', (data) => {
@@ -276,6 +283,10 @@ function App() {
         accepter: data.accepter,
         callId: data.callId
       });
+      
+      // Set call as active
+      setIsCallActive(true);
+      playCallSound(); // Play sound when call is accepted
       
       // Hide notification after 3 seconds
       setTimeout(() => {
@@ -304,6 +315,7 @@ function App() {
       
       // End the active call
       setActiveCall(null);
+      setIsCallActive(false);
       
       // Hide notification after 3 seconds
       setTimeout(() => {
@@ -571,6 +583,44 @@ function App() {
     }
   };
   
+  // Initialize audio context for simulation
+  const initAudioContext = () => {
+    if (!audioContext) {
+      const context = new (window.AudioContext || window.webkitAudioContext)();
+      setAudioContext(context);
+      return context;
+    }
+    return audioContext;
+  };
+
+  // Simulate audio call sound
+  const playCallSound = () => {
+    try {
+      const context = initAudioContext();
+      if (context) {
+        // Create a simple oscillator for call sound
+        const oscillator = context.createOscillator();
+        const gainNode = context.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(context.destination);
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.value = 800;
+        gainNode.gain.value = 0.3;
+        
+        oscillator.start();
+        
+        // Stop after 1 second
+        setTimeout(() => {
+          oscillator.stop();
+        }, 1000);
+      }
+    } catch (error) {
+      console.log('Audio not supported in this browser');
+    }
+  };
+
   // Handle audio call initiation
   const handleInitiateCall = () => {
     socket.emit('initiate audio call', username);
@@ -578,6 +628,7 @@ function App() {
       type: 'calling',
       message: 'Calling users...'
     });
+    playCallSound(); // Play sound when initiating call
   };
   
   // Handle accepting an incoming call
@@ -595,6 +646,10 @@ function App() {
         accepter: username,
         callId: incomingCall.callId
       });
+      
+      // Set call as active
+      setIsCallActive(true);
+      playCallSound(); // Play sound when call is accepted
       
       // Clear the incoming call
       setIncomingCall(null);
@@ -628,6 +683,7 @@ function App() {
       
       // End the call locally
       setActiveCall(null);
+      setIsCallActive(false);
       setCallNotification({
         type: 'ended',
         message: 'Call ended'
@@ -720,7 +776,26 @@ function App() {
               {connectionStatus === 'connected' ? 'Connected' : 
                connectionStatus === 'connecting' ? 'Connecting...' : 'Disconnected'}
             </span>
-            <span className="online-count">{onlineUsers} user{onlineUsers !== 1 ? 's' : ''} online</span>
+            <div 
+              className="online-count"
+              ref={onlineUsersRef}
+              onMouseEnter={() => setShowOnlineUsers(true)}
+              onMouseLeave={() => setShowOnlineUsers(false)}
+              onClick={() => setShowOnlineUsers(!showOnlineUsers)}
+            >
+              {onlineUsers} user{onlineUsers !== 1 ? 's' : ''} online
+              {showOnlineUsers && onlineUsersList.length > 0 && (
+                <div className="online-users-dropdown">
+                  <div className="online-users-list">
+                    {onlineUsersList.map((user, index) => (
+                      <div key={index} className="online-user-item">
+                        {user.username}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
           <button onClick={handleLogout} className="logout-button-top">Logout</button>
         </div>
@@ -755,8 +830,10 @@ function App() {
       
       {/* Active Call Indicator */}
       {activeCall && (
-        <div className="reconnect-banner" style={{ backgroundColor: '#9b59b6' }}>
-          <span>Active call with {activeCall.caller === username ? activeCall.accepter : activeCall.caller}</span>
+        <div className={`reconnect-banner call-active`}>
+          <div className="call-status">
+            <span>Active call with {activeCall.caller === username ? activeCall.accepter : activeCall.caller}</span>
+          </div>
           <button onClick={handleEndCall} className="reconnect-button" style={{ backgroundColor: '#e74c3c' }}>
             End Call
           </button>

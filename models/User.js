@@ -17,13 +17,16 @@ class User {
   // Create indexes for better query performance
   static async createIndexes(db) {
     try {
-      await this.collection(db).createIndex({ username: 1 }, { unique: true });
-      await this.collection(db).createIndex({ email: 1 }, { unique: true });
+      // Create new indexes with proper options to handle duplicates
+      await this.collection(db).createIndex({ username: 1 }, { unique: true, sparse: true });
+      await this.collection(db).createIndex({ email: 1 }, { unique: true, sparse: true });
       await this.collection(db).createIndex({ socketId: 1 });
       await this.collection(db).createIndex({ online: 1 });
       console.log('User indexes created successfully');
     } catch (error) {
       console.error('Error creating user indexes:', error);
+      // If index creation fails, we'll continue without indexes for development
+      console.log('Continuing without indexes for development');
     }
   }
 

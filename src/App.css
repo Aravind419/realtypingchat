@@ -78,6 +78,50 @@ body {
 .online-count {
   text-align: right;
   font-size: 0.8rem;
+  position: relative;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.online-count:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.online-users-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  min-width: 150px;
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 5px;
+}
+
+.online-users-list {
+  padding: 8px 0;
+}
+
+.online-user-item {
+  padding: 8px 12px;
+  border-bottom: 1px solid #eee;
+  font-size: 0.9rem;
+}
+
+.online-user-item:last-child {
+  border-bottom: none;
+}
+
+.online-user-item:before {
+  content: "●";
+  color: #2ecc71;
+  margin-right: 8px;
 }
 
 .logout-button-top {
@@ -107,6 +151,33 @@ body {
   align-items: center;
   font-size: 0.9rem;
   flex-shrink: 0;
+}
+
+.reconnect-banner.call-active {
+  background-color: #9b59b6;
+  animation: pulseCall 2s infinite;
+}
+
+@keyframes pulseCall {
+  0% { background-color: #9b59b6; }
+  50% { background-color: #8e44ad; }
+  100% { background-color: #9b59b6; }
+}
+
+.call-active .call-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.call-active .call-status::before {
+  content: "";
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  background-color: #2ecc71;
+  border-radius: 50%;
+  animation: pulse 1.5s infinite;
 }
 
 .reconnect-button {
